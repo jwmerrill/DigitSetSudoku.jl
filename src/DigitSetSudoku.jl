@@ -88,63 +88,98 @@ module DigitSetSudoku
     Base.getindex(puzzle::SudokuPuzzle, p::BoardPosition) =
         puzzle.cells[p.col, p.stack, p.row, p.band]
 
-    function Base.eachindex(_::Union{SudokuPuzzle, SudokuBoard})
-        [
-            BoardPosition(col, stack, row, band)
-            for col in 1:3, stack in 1:3, row in 1:3, band in 1:3
-        ]
+    immutable BoardIterator
     end
 
-    function neighborindices(p::BoardPosition)
-        out = BoardPosition[]
-
-        for stack in 1:3, col in 1:3
-            p.stack == stack && p.col == col && continue
-            push!(out, BoardPosition(col, stack, p.row, p.band))
+    Base.start(i::BoardIterator) = BoardPosition(0, 1, 1, 1)
+    function Base.next(i::BoardIterator, p::BoardPosition)
+        local newp
+        if p.col == 3
+            if p.stack == 3
+                if p.row == 3
+                    newp = BoardPosition(1, 1, 1, p.band + 1)
+                else
+                    newp = BoardPosition(1, 1, p.row + 1, p.band)
+                end
+            else
+                newp = BoardPosition(1, p.stack + 1, p.row, p.band)
+            end
+        else
+            newp = BoardPosition(p.col + 1, p.stack, p.row, p.band)
         end
-
-        for band in 1:3, row in 1:3
-            p.band == band && p.row == row && continue
-            push!(out, BoardPosition(p.col, p.stack, row, band))
-        end
-
-        for row in 1:3, col in 1:3
-            p.row == row && p.col == col && continue
-            push!(out, BoardPosition(col, p.stack, row, p.band))
-        end
-
-        out
+        (newp, newp)
     end
+    Base.done(i::BoardIterator, p::BoardPosition) = p == BoardPosition(3, 3, 3, 3)
+
+    Base.eachindex(_::Union{SudokuPuzzle, SudokuBoard}) = BoardIterator()
+
+    immutable ColUnit
+        row::Int8
+        band::Int8
+    end
+
+    Base.start(u::ColUnit) = BoardPosition(0, 1, u.row, u.band)
+    function Base.next(u::ColUnit, p::BoardPosition)
+        local newp
+        if p.col == 3
+            newp = BoardPosition(1, p.stack + 1, u.row, u.band)
+        else
+            newp = BoardPosition(p.col + 1, p.stack, u.row, u.band)
+        end
+        (newp, newp)
+    end
+    Base.done(u::ColUnit, p::BoardPosition) = p == BoardPosition(3, 3, u.row, u.band)
+
+    immutable RowUnit
+        col::Int8
+        stack::Int8
+    end
+
+    Base.start(u::RowUnit) = BoardPosition(u.col, u.stack, 0, 1)
+    function Base.next(u::RowUnit, p::BoardPosition)
+        local newp
+        if p.row == 3
+            newp = BoardPosition(u.col, u.stack, 1, p.band + 1)
+        else
+            newp = BoardPosition(u.col, u.stack, p.row + 1, p.band)
+        end
+        (newp, newp)
+    end
+    Base.done(u::RowUnit, p::BoardPosition) = p == BoardPosition(u.col, u.stack, 3, 3)
+
+    immutable BlockUnit
+        stack::Int8
+        band::Int8
+    end
+
+    Base.start(u::BlockUnit) = BoardPosition(0, u.stack, 1, u.band)
+    function Base.next(u::BlockUnit, p::BoardPosition)
+        local newp
+        if p.col == 3
+            newp = BoardPosition(1, u.stack, p.row + 1, u.band)
+        else
+            newp = BoardPosition(p.col + 1, u.stack, p.row, u.band)
+        end
+        (newp, newp)
+    end
+    Base.done(u::BlockUnit, p::BoardPosition) = p == BoardPosition(3, u.stack, 3, u.band)
 
     function units(p::BoardPosition)
         (
-            [
-                BoardPosition(col, stack, p.row, p.band)
-                for col in 1:3, stack in 1:3
-            ],
-            [
-                BoardPosition(p.col, p.stack, row, band)
-                for row in 1:3, band in 1:3
-            ],
-            [
-                BoardPosition(col, p.stack, row, p.band)
-                for col in 1:3, row in 1:3
-            ]
+            ColUnit(p.row, p.band),
+            RowUnit(p.col, p.stack),
+            BlockUnit(p.stack, p.band)
         )
     end
 
     function SudokuBoard(puzzle::SudokuPuzzle)
         board = SudokuBoard()
-        local status = true
         for i in eachindex(puzzle)
             digit = puzzle[i]
-            if digit != 0
-                status = assign!(board, DigitSet(digit), i)
-                status || error("Inconsistent board.")
-            end
+            digit == 0 && continue
+            assign!(board, DigitSet(digit), i) || error("Inconsistent board.")
         end
-        status = search!(board)
-        status || error("Inconsistent board.")
+        search!(board) || error("Inconsistent board.")
         board
     end
 
@@ -162,27 +197,41 @@ module DigitSetSudoku
     end
 
     function nakedsingle!(board::SudokuBoard, ds::DigitSet, i::BoardPosition)
-        if length(ds) == 1
-            for j in neighborindices(i)
-                status = assign!(board, setdiff(board[j], ds), j)
-                status || return false
-            end
+        length(ds) == 1 || return true
+        u1, u2, u3 = units(i)
+        nakedsingleunit!(board, ds, i, u1) || return false
+        nakedsingleunit!(board, ds, i, u2) || return false
+        nakedsingleunit!(board, ds, i, u3) || return false
+        true
+    end
+
+    function nakedsingleunit!(board::SudokuBoard, ds::DigitSet, i::BoardPosition, unit)
+        for j in unit
+            i == j && continue
+            difference = setdiff(board[j], ds)
+            assign!(board, difference, j) || return false
         end
         true
     end
 
     function hiddensingle!(board::SudokuBoard, i::BoardPosition)
-        for unit in units(i)
-            singles = lonelydigits(board, unit)
-            length(singles) > 0 || continue
-            for j in unit
-                intersection = intersect(singles, board[j])
-                # A board is inconsistent if we ever find a cell that contains
-                # more than one lonely digit for the same unit
-                length(intersection) <= 1 || return false
-                length(intersection) == 1 || continue
-                assign!(board, intersection, j) || return false
-            end
+        u1, u2, u3 = units(i)
+        hiddensingleunit!(board, u1) || return false
+        hiddensingleunit!(board, u2) || return false
+        hiddensingleunit!(board, u3) || return false
+        true
+    end
+
+    function hiddensingleunit!(board::SudokuBoard, unit)
+        singles = lonelydigits(board, unit)
+        length(singles) > 0 || return true
+        for i in unit
+            intersection = intersect(singles, board[i])
+            # A board is inconsistent if we ever find a cell that contains
+            # more than one lonely digit for the same unit
+            length(intersection) <= 1 || return false
+            length(intersection) == 1 || continue
+            assign!(board, intersection, i) || return false
         end
         true
     end
@@ -211,7 +260,9 @@ module DigitSetSudoku
         ds = board[i]
         for digit in ds
             tmp = copy(board.cells)
-            status = assign!(board, DigitSet(digit), i) && search!(board)
+            ds = DigitSet(digit)
+            status = assign!(board, ds, i)
+            status = status && search!(board)
             status && return true
             board.cells = tmp
         end
