@@ -1,3 +1,4 @@
+__precompile__()
 module DigitSetSudoku
 
     using DigitSets
