@@ -190,7 +190,9 @@ module DigitSetSudoku
         board[i] = ds
 
         # Strategies
-        nakedsingle!(board, ds, i) || return false
+        if length(ds) == 1
+            nakedsingle!(board, ds, i) || return false
+        end
         hiddensingle!(board, i) || return false
 
         true
@@ -208,7 +210,9 @@ module DigitSetSudoku
     function nakedsingleunit!(board::SudokuBoard, ds::DigitSet, i::BoardPosition, unit)
         for j in unit
             i == j && continue
-            difference = setdiff(board[j], ds)
+            bj = board[j]
+            difference = setdiff(bj, ds)
+            difference == bj && continue
             assign!(board, difference, j) || return false
         end
         true
@@ -226,11 +230,13 @@ module DigitSetSudoku
         singles = lonelydigits(board, unit)
         length(singles) > 0 || return true
         for i in unit
-            intersection = intersect(singles, board[i])
+            bi = board[i]
+            intersection = intersect(singles, bi)
             # A board is inconsistent if we ever find a cell that contains
             # more than one lonely digit for the same unit
             length(intersection) <= 1 || return false
             length(intersection) == 1 || continue
+            intersection == bi && continue
             assign!(board, intersection, i) || return false
         end
         true
