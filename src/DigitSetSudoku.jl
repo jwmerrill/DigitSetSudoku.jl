@@ -83,7 +83,7 @@ module DigitSetSudoku
         for col in 1:3, stack in 1:3, row in 1:3, band in 1:3
     ]
 
-    function SudokuBoard(puzzle::SudokuPuzzle)
+    function solve(puzzle::SudokuPuzzle)
         board = SudokuBoard()
         for i in eachindex(puzzle.squares)
             digit = puzzle.squares[i]
@@ -93,6 +93,8 @@ module DigitSetSudoku
         search!(board) || error("Inconsistent puzzle.")
         board
     end
+
+    SudokuBoard(puzzle::SudokuPuzzle) = solve(puzzle)
 
     function assign!(board::SudokuBoard, ds::DigitSet, i)
         ds == board.squares[i] && return true
@@ -213,6 +215,6 @@ module DigitSetSudoku
         end
     end
 
-    export SudokuBoard, SudokuPuzzle
+    export SudokuBoard, SudokuPuzzle, solve
 
 end # module

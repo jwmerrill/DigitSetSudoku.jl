@@ -8,7 +8,7 @@ function timepuzzles(filehandle)
     n = 0
     for line in eachline(filehandle)
         puzzle = SudokuPuzzle(line)
-        time = @elapsed SudokuBoard(puzzle)
+        time = @elapsed solve(puzzle)
         timesum += time
         timemax = max(time, timemax)
         n += 1
