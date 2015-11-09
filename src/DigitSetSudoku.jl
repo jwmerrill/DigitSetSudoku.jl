@@ -88,9 +88,9 @@ module DigitSetSudoku
         for i in eachindex(puzzle.squares)
             digit = puzzle.squares[i]
             digit == 0 && continue
-            assign!(board, DigitSet(digit), i) || error("Inconsistent board.")
+            assign!(board, DigitSet(digit), i) || error("Inconsistent puzzle.")
         end
-        search!(board) || error("Inconsistent board.")
+        search!(board) || error("Inconsistent puzzle.")
         board
     end
 
