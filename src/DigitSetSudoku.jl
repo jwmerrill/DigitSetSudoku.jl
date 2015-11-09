@@ -37,7 +37,7 @@ module DigitSetSudoku
 
         if length(squares) != 81
             error(@sprintf(
-                "Expected 81 chracters from [\\.0-9] but saw %d.",
+                "Expected 81 characters from [\\.0-9] but saw %d.",
                 length(squares)
             ))
         end
