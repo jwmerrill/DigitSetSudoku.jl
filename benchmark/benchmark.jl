@@ -17,15 +17,15 @@ function timepuzzles(filehandle)
     @printf "Max time: %.6f seconds.\n" timemax
 end
 
-println("Easy puzzles")
+println("50 easy puzzles")
 open(timepuzzles, joinpath(root, "puzzledata", "easy50.txt"))
 println()
 
-println("Top 95 puzzles")
+println("95 hard puzzles")
 open(timepuzzles, joinpath(root, "puzzledata", "top95.txt"))
 println()
 
-println("11 Hardest puzzles")
+println("11 hardest puzzles")
 open(timepuzzles, joinpath(root, "puzzledata", "hardest.txt"))
 println()
 
