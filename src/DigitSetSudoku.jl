@@ -138,7 +138,7 @@ module DigitSetSudoku
         length(singles) > 0 || return true
         for i in unit
             intersection = intersect(singles, board.squares[i])
-            # A board is inconsistent if we ever find a cell that contains
+            # A board is inconsistent if we ever find a square that contains
             # more than one lonely digit for the same unit
             length(intersection) <= 1 || return false
             length(intersection) == 1 || continue
@@ -153,12 +153,12 @@ module DigitSetSudoku
         # Digits that occur multiple times
         multiples = DigitSet()
         for i in unit
-            cell = board.squares[i]
-            # digits that occurred once before and also occur in cell
+            square = board.squares[i]
+            # digits that occurred once before and also occur in square
             # have now occurred multiple times
-            multiples = union(multiples, intersect(cell, singles))
-            # Add digits in cell to singles and remove known multiples
-            singles = setdiff(union(singles, cell), multiples)
+            multiples = union(multiples, intersect(square, singles))
+            # Add digits in square to singles and remove known multiples
+            singles = setdiff(union(singles, square), multiples)
         end
         singles
     end
@@ -201,11 +201,11 @@ module DigitSetSudoku
             for row in 1:3
                 for stack in 1:3
                     for col in 1:3
-                        cell = board.squares[col, stack, row, band]
-                        for digit in cell
+                        square = board.squares[col, stack, row, band]
+                        for digit in square
                             print(io, digit)
                         end
-                        print(io, repeat(" ", width - length(cell) - 1))
+                        print(io, repeat(" ", width - length(square) - 1))
                         (stack == 3 && col == 3) || print(io, " ")
                     end
                     stack < 3 && print(io, "| ")
