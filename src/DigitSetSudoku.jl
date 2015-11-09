@@ -52,7 +52,7 @@ module DigitSetSudoku
                     for col in 1:3
                         digit = puzzle.squares[col, stack, row, band]
                         print(io, digit == 0 ? "." : digit)
-                        print(io, " ")
+                        (stack == 3 && col == 3) || print(io, " ")
                     end
                     stack < 3 && print(io, "| ")
                 end
@@ -205,7 +205,8 @@ module DigitSetSudoku
                         for digit in cell
                             print(io, digit)
                         end
-                        print(io, repeat(" ", width - length(cell)))
+                        print(io, repeat(" ", width - length(cell) - 1))
+                        (stack == 3 && col == 3) || print(io, " ")
                     end
                     stack < 3 && print(io, "| ")
                 end
