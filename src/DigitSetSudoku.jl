@@ -14,26 +14,10 @@ module DigitSetSudoku
         sizehint!(squares, 81)
 
         for c in spec
-            if c == '0' || c == '.'
+            if '0' <= c <= '9'
+                push!(squares, parse(Int, c))
+            elseif c == '.'
                 push!(squares, 0)
-            elseif c == '1'
-                push!(squares, 1)
-            elseif c == '2'
-                push!(squares, 2)
-            elseif c == '3'
-                push!(squares, 3)
-            elseif c == '4'
-                push!(squares, 4)
-            elseif c == '5'
-                push!(squares, 5)
-            elseif c == '6'
-                push!(squares, 6)
-            elseif c == '7'
-                push!(squares, 7)
-            elseif c == '8'
-                push!(squares, 8)
-            elseif c == '9'
-                push!(squares, 9)
             end
         end
 
