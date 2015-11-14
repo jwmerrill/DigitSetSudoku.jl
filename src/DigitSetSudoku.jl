@@ -7,7 +7,9 @@ module DigitSetSudoku
         squares::Array{Int8, 4}
     end
 
-    function SudokuPuzzle(spec::AbstractString)
+    SudokuPuzzle(spec::AbstractString) = parse(SudokuPuzzle, spec)
+
+    function Base.parse(::Type{SudokuPuzzle}, spec::AbstractString)
         squares = Int8[]
         sizehint!(squares, 81)
 
