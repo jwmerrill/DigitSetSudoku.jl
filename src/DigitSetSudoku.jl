@@ -173,8 +173,7 @@ module DigitSetSudoku
         ds = board.squares[i]
         for digit in ds
             tmp = copy(board.squares)
-            ds = DigitSet(digit)
-            status = assign!(board, ds, i)
+            status = assign!(board, DigitSet(digit), i)
             status = status && search!(board)
             status && return true
             board.squares = tmp
@@ -187,7 +186,7 @@ module DigitSetSudoku
         minlen = 10
         for i in eachindex(board.squares)
             len = length(board.squares[i])
-            if len > 1 && len < minlen
+            if 1 < len < minlen
                 minlen = len
                 out = i
             end
