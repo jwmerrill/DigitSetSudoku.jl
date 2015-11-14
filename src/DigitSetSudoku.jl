@@ -71,13 +71,18 @@ module DigitSetSudoku
 
     function solve(puzzle::SudokuPuzzle)
         board = SudokuBoard()
+        assigngivens!(board, puzzle) || error("Inconsistent board")
+        search!(board) || error("Inconsistent board")
+        board
+    end
+
+    function assigngivens!(board::SudokuBoard, puzzle::SudokuPuzzle)
         for i in eachindex(puzzle.squares)
             digit = puzzle.squares[i]
             digit == 0 && continue
-            assign!(board, DigitSet(digit), i) || error("Inconsistent puzzle.")
+            assign!(board, DigitSet(digit), i) || return false
         end
-        search!(board) || error("Inconsistent puzzle.")
-        board
+        true
     end
 
     SudokuBoard(puzzle::SudokuPuzzle) = solve(puzzle)
